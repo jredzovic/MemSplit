@@ -1,4 +1,4 @@
-# --- imports ---
+# imports
 import napari
 import numpy as np
 import os
@@ -15,7 +15,7 @@ from skimage import filters, segmentation, measure
 from skimage.measure import label as connected_components
 import time
 
-# --- main class ---
+# main class
 class LabelPickerWidget(QWidget):
     def __init__(self, viewer: napari.Viewer):
         super().__init__()
@@ -145,7 +145,7 @@ class LabelPickerWidget(QWidget):
         self.save_btn.clicked.connect(self._save_segmentation)
         layout.addWidget(self.save_btn)
 
-    # --- replaced split method ---
+    # replaced split method
     def _split_selected_label(self):
         if not self.label_layer:
             self.label_layer = self.viewer.layers.selection.active
@@ -183,7 +183,7 @@ class LabelPickerWidget(QWidget):
         self.label_list.clear()
         print(f"Split labels into {num_components} components.")
 
-    # --- all other methods unchanged ---
+    # all other methods unchanged
     def _add_section_header(self, layout, title):
         header = QLabel(title)
         header.setStyleSheet("font-weight: bold; font-size: 14pt;")
@@ -401,7 +401,7 @@ class LabelPickerWidget(QWidget):
         self.label_layer.data = data
 
 
-# --- launch viewer ---
+# launch viewer 
 if __name__ == "__main__":
     viewer = napari.Viewer()
     widget = LabelPickerWidget(viewer)
