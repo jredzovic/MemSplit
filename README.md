@@ -1,4 +1,4 @@
-# Memsplit — napari plugin
+# MemSplit — napari plugin
 
 Automated classification and post‑processing of **semantic membrane segmentations** from probability/score volumes (e.g. outputs from [MemBrain‑seg](https://github.com/teamtomo/membrain-seg)).
 
