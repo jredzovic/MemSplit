@@ -1,3 +1,6 @@
+# Author = Jasmina Redzovic and Kathiravan Ezhilan
+
+
 # --- imports ---
 import napari
 import numpy as np
