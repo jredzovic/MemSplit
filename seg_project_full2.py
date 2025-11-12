@@ -1,3 +1,5 @@
+# Author = Jasmina Redzovic
+
 import napari
 import numpy as np
 import mrcfile
