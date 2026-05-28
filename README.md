@@ -12,7 +12,8 @@ Automated classification and post‑processing of **semantic membrane segmentati
 * **Interactive label picking** ("Label Selector Mode") to collect label IDs by clicking in the viewer.
 * **Merge picked labels** into a target label ID or background (0), with safe conflict handling.
 * **Split selected labels** by connected components (useful to separate touching instances).
-* **Fast save to .mrc** with user‑specified **voxel size (Å)**; automatic dtype fallback (uint8→uint16→uint32).
+* **Refine one picked label with watershed** using a higher score threshold inside that label only.
+* **Fast save to .mrc** using **voxel size read from the score volume** when available, with automatic dtype fallback (uint8→uint16→uint32).
 * **Undo** (Ctrl/⌘+Z) for picks and data edits where available.
 
 > Designed for 2D/3D label layers; optimized for 3D tomograms.
@@ -102,13 +103,17 @@ Dependencies (installed automatically if packaged): `napari`, `numpy`, `mrcfile`
 
       * Select one or more picked labels in the list.
       * Click **Split Selected Label (CC)** to split each into separate components and assign new IDs.
+   6. **Refine one picked label** with ROI watershed:
+
+      * Pick exactly one non-background label in the list.
+      * Set **Selected-label watershed seed threshold (absolute)**.
+      * Click **Split Selected Label (Watershed)** to run watershed only inside that label using `score > 0` as the ROI mask and `score > threshold` as the seed mask.
 
    ### E) Save to .mrc
 
    1. In **Save Segmentation**, choose your **Label Layer**.
-   2. Set **Voxel Size (Å)** — written into the MRC header as isotropic `(vx, vy, vz)`.
-   3. **Browse Output Path…** and select a filename (e.g. `my_seg.mrc`).
-   4. Click **Save Segmentation** (automatic dtype fallback ensures success on large labels).
+   2. Confirm the displayed voxel size read from the selected score volume.
+   3. Click **Save Segmentation…**, choose a filename (e.g. `my_seg.mrc`), and the file is saved immediately.
 
 ---
 
@@ -123,7 +128,7 @@ Dependencies (installed automatically if packaged): `napari`, `numpy`, `mrcfile`
 
 * **Post‑process MemBrain‑seg output**
 
-  1. Load the probability map, run **Watershed**, 2) **Connected components** to relabel instances, 3) **Split Selected Label (CC)** if touching instances remain, 4) **Merge** small artifacts into background or a main instance, 5) **Z‑axis cleanup**, 6) **Save**.
+  1. Load the probability map, run **Watershed**, 2) **Connected components** to relabel instances, 3) **Split Selected Label (CC)** if touching instances remain, 4) **Split Selected Label (Watershed)** for harder cases that need a higher absolute seed threshold inside one label, 5) **Merge** small artifacts into background or a main instance, 6) **Z‑axis cleanup**, 7) **Save**.
 
 * **Manual curation of watershed instances**
   Pick suspect IDs, **Split** to separate, then **Merge** appropriate pieces back into the correct category/ID.
@@ -151,7 +156,7 @@ Dependencies (installed automatically if packaged): `napari`, `numpy`, `mrcfile`
 * **“Invalid Data”** during watershed: Ensure the score volume is 3D.
 * **“No label layer”** for CC/Z‑cleanup: Select a Labels layer in the viewer first.
 * **“Invalid Z Range”**: `Stop Z` must be > `Start Z` and ≤ number of slices.
-* **Saved file looks empty**: Confirm voxel size and that labels are non‑zero in the exported layer.
+* **Saved file looks empty**: Confirm the exported layer contains non‑zero labels and that the score volume header provided the expected voxel size.
 
 ---
 
