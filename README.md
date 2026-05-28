@@ -1,7 +1,6 @@
 # MemSplit
 
-MemSplit is a small napari tool for turning membrane score volumes into instance labels and for cleaning the result manually.
-
+MemSplit is a toolkit for converting semantic membrane segmentations into instance segmentations, assigning instances to specific labels, and removing artifacts, paving the way for downstream quantitative analysis.
 It is designed for 3D cryo-ET membrane segmentations stored as `.mrc` volumes.
 
 ## What it does
