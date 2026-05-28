@@ -1,184 +1,149 @@
-# MemSplit — napari plugin
+# MemSplit
 
-Automated classification and post‑processing of **semantic membrane segmentations** from probability/score volumes
+MemSplit is a small napari tool for turning membrane score volumes into instance labels and for cleaning the result manually.
 
----
+It is designed for 3D cryo-ET membrane segmentations stored as `.mrc` volumes.
 
-## ✨ Features
+## What it does
 
-* **Watershed from score volume** (.mrc) using Sobel gradient + seed thresholding; optionally load the score volume into the viewer.
-* **Z‑axis artifact cleanup** by zeroing all labels outside a chosen slice range.
-* **Connected components** (relabeling) with option to write to a new or the same layer.
-* **Interactive label picking** ("Label Selector Mode") to collect label IDs by clicking in the viewer.
-* **Merge picked labels** into a target label ID or background (0), with safe conflict handling.
-* **Split selected labels** by connected components (useful to separate touching instances).
-* **Refine one picked label with watershed** using a higher score threshold inside that label only.
-* **Fast save to .mrc** using **voxel size read from the score volume** when available, with automatic dtype fallback (uint8→uint16→uint32).
-* **Undo** (Ctrl/⌘+Z) for picks and data edits where available.
+- Run watershed on a score volume to create instance labels
+- Relabel a segmentation with connected components
+- Clean labels outside a chosen Z range
+- Pick labels in napari and merge them
+- Split picked labels with connected components
+- Refine one picked label with watershed inside that label only
+- Save the edited label volume back to `.mrc`
 
-> Designed for 2D/3D label layers; optimized for 3D tomograms.
+## Requirements
 
----
+- A working Qt / napari environment
 
-## 🧩 Inputs & outputs
 
-* **Inputs:**
+From the folder execute
+python run_memsplit.py
 
-  * 3D **score/probability volume** (MRC format), e.g. from MemBrain‑seg.
-  * Existing **Labels** layers in napari.
-* **Outputs:**
 
-  * New/modified **Labels** layers in napari.
-  * **.mrc** files with label data and voxel size written into header.
+This opens napari and adds the dock widget `Label Toolkit`.
 
-> Tip: Use strictly positive scores for the foreground mask. Negative or zero scores are treated as background during watershed.
+## Inputs
 
----
+MemSplit Inputs:
 
-## 🔧 Installation
+- a 3D score volume in `.mrc` format
+-  or a instance segmentation you want to assign labels and clean up artifacts 
 
-Memsplit is a standard napari dock widget.
+## Basic workflow
 
-### Option A — Install from source (developer mode)
+### 1. Run watershed
 
-```bash
-# inside a fresh environment with Python ≥3.9
-pip install -U pip
-pip install -e .
-```
+1. Click `Browse Score Volume...`
+2. Select the score `.mrc` file
+3. Set `Seed Threshold (absolute)`
+4. Click `Run Watershed`
 
-This expects a `pyproject.toml`/`setup.cfg` with napari plugin entry points. If you’re working from a single script, see **Option B**.
+Current watershed behavior:
 
-### Option B — Run the widget script directly
 
-If you have `circular_select.py` in your project:
+- the score volume must be 3D
+- Usually threshold of 3.5 and above works. But try different scores until you find the optimum for your data
 
-```bash
-python circular_select.py
-```
+### 2. Clean labels in Z
 
-This will open napari and add the dock widget **“Label Toolkit”**.
+1. Select a labels layer in napari
+2. Set `Start Z` and `Stop Z`
+3. Click `Clean Z Range`
 
-Dependencies (installed automatically if packaged): `napari`, `numpy`, `mrcfile`, `scikit-image`, `qtpy`.
+This creates a new labels layer called `cleaned_segmentation`.
 
----
+### 3. Run connected components
 
-## 🚀 Quick start (GUI)
+1. Select a labels layer
+2. Optionally keep `Create New Layer` enabled
+3. Click `Run Connected Components`
 
-1. **Open napari** and ensure your score/segmentation volumes are available.
-2. From the **Memsplit / Label Toolkit** dock widget:
+This is useful when one semantic label contains multiple disconnected objects.
 
-   ### A) Watershed from score volume
+### 4. Pick, merge, and split labels
 
-   1. Click **Browse Score Volume…** and select a 3D `.mrc` score/probability map.
-   2. (Optional) Keep **Load score volume into viewer** checked to visualize the map.
-   3. Set **Seed Threshold (absolute)** — seeds are created where `score > threshold` (start around `2.0`, adjust as needed).
-   4. Click **Run Watershed**.
+1. Activate `Label Selector Mode`
+2. Click labels in the viewer to add them to `Picked Labels`
+3. Background `0` is ignored
 
-      * Internally: foreground mask `score > 0`, Sobel gradient for the landscape, labeled seeds from the threshold, then `skimage.segmentation.watershed`.
-      * A new **Labels** layer named `<basename>_watershed` is added.
+Available actions:
 
-   ### B) Z‑axis cleanup
+- `Remove Selected`: remove IDs from the picked list
+- `Merge Labels`: merge picked labels into the ID set in `Merge picked labels into`
+- `Split Selected Label (CC)`: split picked labels by connected components
+- `Split Selected Label (Watershed)`: refine exactly one picked label using watershed inside that label only
 
-   1. Set **Start Z** and **Stop Z** slice indices.
-   2. Click **Clean Z Range** to zero labels outside `[Start Z, Stop Z)`.
-   3. A new **Labels** layer called **cleaned_segmentation** appears.
+Selected-label watershed behavior:
 
-   ### C) Connected components (relabel)
+- works on one picked non-background label at a time
+- mask: `score > 0` inside the selected label
+- seeds: `score > selected_label_threshold`
+- the selected-label threshold is absolute
 
-   1. Activate a **Labels** layer in the layer list.
-   2. Toggle **Create New Layer** if you prefer a separate output.
-   3. Click **Run Connected Components**.
+### 5. Save the result
 
-   ### D) Label selection & editing
+1. In `Save Segmentation`, choose the labels layer to save
+2. Check the voxel size shown from the score volume header
+3. Click `Save Segmentation...`
+4. Choose the output filename
 
-   1. Toggle **Label Selector Mode**.
-   2. Click in the viewer to **pick label IDs**; they are listed under **Picked Labels**.
-   3. Use **Remove Selected** to delete entries from the pick list.
-   4. **Merge picked labels**:
+The file is saved immediately after you choose the path.
 
-      * Set **Merge picked labels into** (an integer ID; `0` merges into background).
-      * Click **Merge Labels**.
-   5. **Split selected label(s)** by CC:
+Save behavior:
 
-      * Select one or more picked labels in the list.
-      * Click **Split Selected Label (CC)** to split each into separate components and assign new IDs.
-   6. **Refine one picked label** with ROI watershed:
+- MemSplit writes `.mrc`
+- voxel size is read from the selected score volume when available
+- if no readable voxel size is found, it falls back to `1.0 A`
+- output dtype is automatically chosen from `uint8`, `uint16`, or `uint32`
 
-      * Pick exactly one non-background label in the list.
-      * Set **Selected-label watershed seed threshold (absolute)**.
-      * Click **Split Selected Label (Watershed)** to run watershed only inside that label using `score > 0` as the ROI mask and `score > threshold` as the seed mask.
+## Typical use case
 
-   ### E) Save to .mrc
+1. Load a score volume
+2. Run watershed
+3. Run connected components if needed
+4. Pick problematic labels
+5. Split or merge them
+6. Clean Z artifacts
+7. Save the final labels
 
-   1. In **Save Segmentation**, choose your **Label Layer**.
-   2. Confirm the displayed voxel size read from the selected score volume.
-   3. Click **Save Segmentation…**, choose a filename (e.g. `my_seg.mrc`), and the file is saved immediately.
+## Troubleshooting
 
----
+### "Missing Score Volume"
 
-## ⌨️ Shortcuts
+Choose a valid `.mrc` score volume before running watershed or selected-label watershed.
 
-* **Ctrl/⌘+Z** — Undo last action (picks or previous label data in supported steps).
-* **Delete / Backspace** — Remove highlighted IDs from **Picked Labels** list.
 
----
 
-## 🎯 Typical workflows
+### "No label layer"
 
-* **Post‑process MemBrain‑seg output**
+Select a napari `Labels` layer before running connected components, Z cleaning, merge, or split tools.
 
-  1. Load the probability map, run **Watershed**, 2) **Connected components** to relabel instances, 3) **Split Selected Label (CC)** if touching instances remain, 4) **Split Selected Label (Watershed)** for harder cases that need a higher absolute seed threshold inside one label, 5) **Merge** small artifacts into background or a main instance, 6) **Z‑axis cleanup**, 7) **Save**.
+### No seeds found in selected-label watershed
 
-* **Manual curation of watershed instances**
-  Pick suspect IDs, **Split** to separate, then **Merge** appropriate pieces back into the correct category/ID.
+The threshold is too high for that label, or the score volume does not match the label volume.
 
----
+### Saved file looks wrong
 
-## ⚠️ Notes & limitations
+Check:
 
-* Watershed assumes **scores > 0** define the valid mask; set your preprocessing accordingly.
-* **Seed Threshold** is **absolute** in score units; if your scores are already normalized to [0,1], start with ~0.2–0.4.
-* Input must be **3D** for watershed and Z‑cleanup.
-* Very large label counts may trigger automatic upcasting from `uint8` → `uint16` → `uint32` on save.
+- you selected the correct labels layer
+- the score volume header contains the expected voxel size
+- the label volume is not empty
 
----
+## Files
 
-## 🧪 Testing data
+- `run_memsplit.py` launches napari with the widget
+- `widget.py` contains the GUI logic
+- `segmentation.py` contains watershed and segmentation helpers
+- `label_ops.py` contains merge and split helpers
+- `io_mrc.py` handles `.mrc` loading and saving
 
-* Any 3D probability map in **MRC** format (e.g., from MemBrain‑seg). For convenience, start with a small tomogram to dial in thresholds.
+## Acknowledgement
 
----
+This tool is intended for post-processing membrane segmentations such as MemBrain-seg outputs in cryo-ET workflows.
 
-## 🛠 Troubleshooting
 
-* **“Missing Score Volume”**: Pick a valid `.mrc` file (3D) via **Browse Score Volume…**.
-* **“Invalid Data”** during watershed: Ensure the score volume is 3D.
-* **“No label layer”** for CC/Z‑cleanup: Select a Labels layer in the viewer first.
-* **“Invalid Z Range”**: `Stop Z` must be > `Start Z` and ≤ number of slices.
-* **Saved file looks empty**: Confirm the exported layer contains non‑zero labels and that the score volume header provided the expected voxel size.
-
----
-
-## 📦 API (advanced)
-
-While Memsplit is GUI‑oriented, it relies on `skimage.filters.sobel`, `skimage.measure.label`, and `skimage.segmentation.watershed`. Advanced users may adapt the widget code to batch‑process volumes.
-
----
-
-## 🙌 Acknowledgements
-
-* Probability maps typically produced by **MemBrain‑seg** — membrane segmentation for cryo‑ET.
-* Built with **napari**, **NumPy**, **scikit‑image**, **mrcfile**, and **Qt**.
-
----
-
-## 📄 License
-
-Specify your license here (e.g., MIT/BSD‑3‑Clause). Include a `LICENSE` file in the repository.
-
----
-
-## 📚 Citation
-
-If this tool was useful in your research, please cite this repository and MemBrain‑seg (see their repository for citation guidance).
+DOI to cite will be updated soon. If you are using the plugin and about to publish contact the creators regarding this 
