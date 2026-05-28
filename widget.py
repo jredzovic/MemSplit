@@ -16,13 +16,24 @@ from qtpy.QtCore import Qt
 from qtpy.QtGui import QKeyEvent
 
 # <-- NEW: use your helper modules instead of doing everything here
-from .segmentation import (
-    watershed_from_scores,
-    relabel_connected_components,
-    clean_z_range,
-)
-from .label_ops import split_selected_labels_cc, merge_labels
-from .io_mrc import load_score_volume, save_segmentation
+try:
+    from .segmentation import (
+        watershed_from_scores,
+        relabel_connected_components,
+        split_single_label_watershed,
+        clean_z_range,
+    )
+    from .label_ops import split_selected_labels_cc, merge_labels
+    from .io_mrc import load_mrc_voxel_size, load_score_volume, save_segmentation
+except ImportError:
+    from segmentation import (
+        watershed_from_scores,
+        relabel_connected_components,
+        split_single_label_watershed,
+        clean_z_range,
+    )
+    from label_ops import split_selected_labels_cc, merge_labels
+    from io_mrc import load_mrc_voxel_size, load_score_volume, save_segmentation
 
 
 class LabelPickerWidget(QWidget):
@@ -32,8 +43,8 @@ class LabelPickerWidget(QWidget):
         self.label_layer: Labels | None = None
         self.selected_labels: list[int] = []
         self._undo_stack: list[np.ndarray] = []
-        self.save_path: str | None = None
         self.score_path: str | None = None
+        self.score_voxel_size: float | None = None
 
         layout = QVBoxLayout()
         self.setLayout(layout)
@@ -126,6 +137,18 @@ class LabelPickerWidget(QWidget):
         self.split_btn.clicked.connect(self._split_selected_label)
         layout.addWidget(self.split_btn)
 
+        layout.addWidget(QLabel("Selected-label watershed seed threshold (absolute):"))
+        self.selected_label_seed_threshold_input = QDoubleSpinBox()
+        self.selected_label_seed_threshold_input.setDecimals(2)
+        self.selected_label_seed_threshold_input.setMinimum(0.0)
+        self.selected_label_seed_threshold_input.setSingleStep(0.1)
+        self.selected_label_seed_threshold_input.setValue(1.5)
+        layout.addWidget(self.selected_label_seed_threshold_input)
+
+        self.split_watershed_btn = QPushButton("Split Selected Label (Watershed)")
+        self.split_watershed_btn.clicked.connect(self._split_selected_label_watershed)
+        layout.addWidget(self.split_watershed_btn)
+
         # hook custom key events on the list
         self.label_list.keyPressEvent = self._key_press_event_override
         self.setFocusPolicy(Qt.StrongFocus)
@@ -143,19 +166,11 @@ class LabelPickerWidget(QWidget):
         viewer.layers.events.inserted.connect(self._update_layer_selector)
         viewer.layers.events.removed.connect(self._update_layer_selector)
 
-        layout.addWidget(QLabel("Voxel Size (Å)"))
-        self.voxel_size_input = QDoubleSpinBox()
-        self.voxel_size_input.setDecimals(3)
-        self.voxel_size_input.setMinimum(0.001)
-        self.voxel_size_input.setSingleStep(0.1)
-        self.voxel_size_input.setValue(1.0)
-        layout.addWidget(self.voxel_size_input)
+        layout.addWidget(QLabel("Voxel Size from Score Volume"))
+        self.voxel_size_label = QLabel("No score volume selected")
+        layout.addWidget(self.voxel_size_label)
 
-        self.browse_btn = QPushButton("Browse Output Path…")
-        self.browse_btn.clicked.connect(self._browse_output_path)
-        layout.addWidget(self.browse_btn)
-
-        self.save_btn = QPushButton("Save Segmentation")
+        self.save_btn = QPushButton("Save Segmentation…")
         self.save_btn.clicked.connect(self._save_segmentation)
         layout.addWidget(self.save_btn)
 
@@ -190,6 +205,11 @@ class LabelPickerWidget(QWidget):
         )
         if file_path:
             self.score_path = file_path.strip('"').strip("'")
+            try:
+                self.score_voxel_size = load_mrc_voxel_size(self.score_path)
+            except Exception:
+                self.score_voxel_size = None
+            self._update_voxel_size_label()
 
     def _run_watershed_segmentation(self):
         if not self.score_path or not os.path.isfile(self.score_path):
@@ -260,37 +280,44 @@ class LabelPickerWidget(QWidget):
                     return layer
         return self.viewer.layers.selection.active
 
-    def _browse_output_path(self):
-        layer = self._get_selected_label_layer()
-        default_name = f"{layer.name}_modified.mrc" if layer else "segmentation_saved.mrc"
-        file_path, _ = QFileDialog.getSaveFileName(
-            self,
-            "Save As",
-            default_name,
-            "MRC Files (*.mrc)",
-        )
-        if file_path:
-            self.save_path = file_path.strip('"\'')
+    def _update_voxel_size_label(self):
+        if self.score_voxel_size is None:
+            self.voxel_size_label.setText("No readable voxel size found in score volume header")
+            return
+        self.voxel_size_label.setText(f"{self.score_voxel_size:.3f} Å")
 
     def _save_segmentation(self):
-        layer = self.label_layer or self._get_selected_label_layer()
+        layer = self._get_selected_label_layer()
         if not layer:
             QMessageBox.warning(self, "No Label Layer", "Please select a label layer.")
             return
-        if not self.save_path:
-            QMessageBox.warning(self, "Missing File Path", "Please choose a file path to save.")
+
+        default_dir = os.path.dirname(self.score_path) if self.score_path else ""
+        default_name = f"{layer.name}.mrc"
+        default_path = os.path.join(default_dir, default_name) if default_dir else default_name
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save Segmentation",
+            default_path,
+            "MRC Files (*.mrc)",
+        )
+        if not file_path:
             return
 
-        voxel = self.voxel_size_input.value()
+        save_path = file_path.strip('"\'')
+        voxel = self.score_voxel_size if self.score_voxel_size is not None else 1.0
         data = layer.data
 
         try:
-            save_segmentation(self.save_path, data, voxel_size=voxel)
+            save_segmentation(save_path, data, voxel_size=voxel)
         except Exception as e:
             QMessageBox.critical(self, "Save Error", f"Failed to save segmentation:\n{e}")
             return
 
-        QMessageBox.information(self, "Saved", f"Saved segmentation to:\n{self.save_path}")
+        suffix = ""
+        if self.score_voxel_size is None:
+            suffix = "\n\nVoxel size was not readable from the score volume header, so 1.0 Å was used."
+        QMessageBox.information(self, "Saved", f"Saved segmentation to:\n{save_path}{suffix}")
 
     # ------------------------------------------------------------------
     # Undo
@@ -380,6 +407,9 @@ class LabelPickerWidget(QWidget):
                         return
                     label_id = int(value)
 
+                if label_id == 0:
+                    return
+
                 self.selected_labels.append(label_id)
                 self.label_list.addItem(str(label_id))
 
@@ -456,6 +486,83 @@ class LabelPickerWidget(QWidget):
         self.selected_labels.clear()
         self.label_list.clear()
         print(f"Split labels into {num_components} components.")
+
+    def _split_selected_label_watershed(self):
+        if not self.label_layer:
+            self.label_layer = self.viewer.layers.selection.active
+        if not self.label_layer:
+            QMessageBox.warning(self, "No Label Layer", "Please select a label layer.")
+            return
+
+        unique_labels = list(dict.fromkeys(self.selected_labels))
+        if not unique_labels:
+            QMessageBox.warning(
+                self,
+                "Selection Error",
+                "Please pick exactly one non-background label to refine.",
+            )
+            return
+        if len(unique_labels) != 1:
+            QMessageBox.warning(
+                self,
+                "Selection Error",
+                "Selected-label watershed works on one picked label at a time.",
+            )
+            return
+
+        selected_label = int(unique_labels[0])
+        if selected_label == 0:
+            QMessageBox.warning(
+                self,
+                "Selection Error",
+                "Background label 0 cannot be refined.",
+            )
+            return
+
+        if not self.score_path or not os.path.isfile(self.score_path):
+            QMessageBox.warning(
+                self,
+                "Missing Score Volume",
+                "Please browse a valid score volume before running selected-label watershed.",
+            )
+            return
+
+        data = self.label_layer.data
+
+        try:
+            scores = load_score_volume(self.score_path)
+            if scores.shape != data.shape:
+                QMessageBox.warning(
+                    self,
+                    "Shape Mismatch",
+                    "Score volume and label layer must have the same shape.",
+                )
+                return
+
+            seed_threshold = self.selected_label_seed_threshold_input.value()
+            new_data, num_components = split_single_label_watershed(
+                data,
+                scores,
+                selected_label,
+                seed_threshold=seed_threshold,
+            )
+        except ValueError as e:
+            QMessageBox.warning(self, "Selected-label Watershed Error", str(e))
+            return
+        except Exception as e:
+            QMessageBox.critical(self, "Selected-label Watershed Error", f"An error occurred:\n{e}")
+            return
+
+        self._undo_stack.clear()
+        self._undo_stack.append(data.copy())
+
+        self.label_layer.data = new_data
+        self.selected_labels.clear()
+        self.label_list.clear()
+        print(
+            f"Refined label {selected_label} into {num_components} watershed components "
+            f"using absolute seed threshold {seed_threshold:.2f}."
+        )
 
 
 # Optional: standalone testing entry point

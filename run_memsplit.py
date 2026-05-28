@@ -1,6 +1,7 @@
 # run_memsplit.py
 import napari
-from memsplit_toolkit import LabelPickerWidget
+
+from widget import LabelPickerWidget
 
 if __name__ == "__main__":
     viewer = napari.Viewer()

@@ -12,6 +12,29 @@ def load_score_volume(path: str) -> np.ndarray:
         return mrc.data.astype(np.float32, copy=True)
 
 
+def load_mrc_voxel_size(path: str) -> float | None:
+    """
+    Read voxel size from an MRC header and return a single isotropic value.
+    Returns None if the header does not provide a usable positive voxel size.
+    """
+    with mrcfile.open(path, permissive=True) as mrc:
+        voxel_size = mrc.voxel_size
+
+        values = []
+        for axis in ("x", "y", "z"):
+            try:
+                value = float(getattr(voxel_size, axis))
+            except (AttributeError, TypeError, ValueError):
+                value = None
+            if value is not None and np.isfinite(value) and value > 0:
+                values.append(value)
+
+        if not values:
+            return None
+
+        return float(np.mean(values))
+
+
 def save_segmentation(path: str, data: np.ndarray, voxel_size: float):
     """
     Save segmentation to MRC, with the same dtype fallback logic as _save_segmentation.
