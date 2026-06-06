@@ -56,6 +56,9 @@ When running MemBrain-seg, add the following argument to store the required prob
 ```bash
 --store-probabilities
 ```
+More details about MemBrain-seg segmentation usage are available here:
+
+https://teamtomo.org/membrain-seg/Usage/Segmentation/
 
 ## What it does
 
