@@ -70,24 +70,6 @@ https://teamtomo.org/membrain-seg/Usage/Segmentation/
 - Refine one picked label with watershed inside that label only
 - Save the edited label volume back to `.mrc`
 
-## Requirements
-
-- A working Qt / napari environment
-
-
-From the folder execute
-python run_memsplit.py
-
-
-This opens napari and adds the dock widget `Label Toolkit`.
-
-## Inputs
-
-MemSplit Inputs:
-
-- a 3D score volume in `.mrc` format
--  or a instance segmentation you want to assign labels and clean up artifacts 
-
 ## Basic workflow
 
 ### 1. Run watershed
@@ -98,7 +80,6 @@ MemSplit Inputs:
 4. Click `Run Watershed`
 
 Current watershed behavior:
-
 
 - the score volume must be 3D
 - Usually threshold of 3.5 and above works. But try different scores until you find the optimum for your data
