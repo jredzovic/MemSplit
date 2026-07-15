@@ -1,7 +1,6 @@
 # MemSplit
 
 MemSplit is a toolkit for converting semantic membrane segmentations into instance segmentations, assigning instances to specific labels, and removing artifacts, paving the way for downstream quantitative analysis.
-It is designed for 3D cryo-ET membrane segmentations stored as `.mrc` volumes.
 
 ## Installation
 
