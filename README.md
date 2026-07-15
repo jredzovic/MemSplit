@@ -1,8 +1,7 @@
-<img width="1920" height="1028" alt="instance_3d_with_viewer" src="https://github.com/user-attachments/assets/cfbc1cc0-7adc-4bb5-a3b3-6e69ac81c9c3" />
-
 # MemSplit
 
 MemSplit is a toolkit for converting semantic membrane segmentations into instance segmentations, assigning instances to specific labels, and removing artifacts, paving the way for downstream quantitative analysis.
+<img width="1920" height="1028" alt="instance_3d_with_viewer" src="https://github.com/user-attachments/assets/cfbc1cc0-7adc-4bb5-a3b3-6e69ac81c9c3" />
 
 
 ## Installation
