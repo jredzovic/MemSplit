@@ -79,13 +79,9 @@ https://teamtomo.org/membrain-seg/Usage/Segmentation/
 1. Click `Browse Score Volume...`
 2. Select the score `.mrc` file
 3. Set `Seed Threshold (absolute)`
-4. Click `Run Watershed`
-
-Current watershed behavior:
-
-- the score volume must be 3D
-- Usually threshold of 3.5 and above works. But try different scores until you find the optimum for your data
-
+- Usually, a threshold of 3.5 and above works. But try different scores until you find the optimum for your data. Alternatively, you could use a threshold of around 4, and if some membranes are not split, you could select them and apply a higher watershed threshold that splits this region alone. 
+4. Click 'Run Watershed'
+  
 ### 2. Clean labels in Z
 
 1. Select a labels layer in napari
