@@ -65,7 +65,6 @@ https://teamtomo.org/membrain-seg/Usage/Segmentation/
 ## What it does
 
 - Runs seeded watershed on a score volume to create instance labels
-- Relabel a segmentation with connected components
 - Clean labels outside a chosen Z range
 - Pick labels in napari and merge them
 - Split picked labels with connected components
@@ -138,19 +137,16 @@ Save behavior:
 
 1. Load a score volume
 2. Run watershed
-3. Run connected components if needed
-4. Pick problematic labels
-5. Split or merge them
-6. Clean Z artifacts
-7. Save the final labels
+3. Pick problematic labels
+4. Split or merge them
+5. Clean Z artefacts, if needed
+6. Save the final labels
 
 ## Troubleshooting
 
 ### "Missing Score Volume"
 
 Choose a valid `.mrc` score volume before running watershed or selected-label watershed.
-
-
 
 ### "No label layer"
 
