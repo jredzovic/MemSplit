@@ -4,6 +4,9 @@ MemSplit is a toolkit for converting semantic membrane segmentations into instan
 
 <img width="1920" height="1028" alt="instance_3d_with_viewer" src="https://github.com/user-attachments/assets/9cb06045-c3a8-49fe-80b9-4d13c9fdca64" />
 
+Seeded watershed
+
+MemSplit uses a seeded watershed algorithm to separate touching membrane regions. High-confidence voxels from the MemBrain-seg prediction map (score volume) are first thresholded to generate seed regions. Because  artefactual typically have lower prediction scores, they are often excluded from these seeds. The watershed algorithm then expands each seed through the complete membrane segmentation, producing separate membrane instances while preserving the full segmented membrane geometry.
 
 ## Installation
 
@@ -62,42 +65,38 @@ More details about MemBrain-seg segmentation usage are available here:
 
 https://teamtomo.org/membrain-seg/Usage/Segmentation/
 
-## What it does
-
-- Runs seeded watershed on a score volume to create instance labels
-- Clean labels outside a chosen Z range
-- Pick labels in napari and merge them
-- Split picked labels with connected components
-- Refine one picked label with watershed inside that label only
-- Save the edited label volume back to `.mrc`
 
 ## Basic workflow
 
-### 1. Run watershed
+1. Perform a global watershed
 
-1. Click `Browse Score Volume...`
-2. Select the score `.mrc` file
-3. Set `Seed Threshold (absolute)`
-- Usually, a threshold of 3.5 and above works. But try different scores until you find the optimum for your data. Alternatively, you could use a threshold of around 4, and if some membranes are not split, you could select them and apply a higher watershed threshold that splits this region alone. 
-4. Click 'Run Watershed'
-  
-### 2. Clean labels in Z
+The first step is to generate an initial instance segmentation by applying seeded watershed to the entire score volume.
 
-1. Select a labels layer in napari
-2. Set `Start Z` and `Stop Z`
-3. Click `Clean Z Range`
+Click Browse Score Volume...
+Select the score .mrc file.
+Set the Seed Threshold (absolute).
+Click Run Watershed.
+<img width="422" height="200" alt="image" src="https://github.com/user-attachments/assets/3011ff8e-6b22-435f-960b-56a27f52ba2e" />
 
-This creates a new labels layer called `cleaned_segmentation`.
+We recommend starting with a relatively conservative threshold (around 4.0–4.5, changes depending on your data). This generally separates most neighbouring membranes while avoiding excessive fragmentation of the segmentation into many small labels.
 
-### 3. Run connected components
+2. Refine individual labels (recommended)
 
-1. Select a labels layer
-2. Optionally keep `Create New Layer` enabled
-3. Click `Run Connected Components`
+Some membranes may remain connected after the global watershed. Rather than increasing the global seed threshold—which may over-fragment the entire volume—MemSplit allows you to refine only the problematic region.
 
-This is useful when one semantic label contains multiple disconnected objects.
+Enable Label Selector Mode.
+Click the label that requires further splitting.
+Increase the Selected-label watershed seed threshold (More than what you used in the global watershed)
+Click Split Selected Label (Watershed).
+<img width="414" height="540" alt="image" src="https://github.com/user-attachments/assets/7b0f53b2-ae65-4656-af48-4a949feca135" />
 
-### 4. Pick, merge, and split labels
+
+This performs seeded watershed only within the selected label, leaving the rest of the segmentation unchanged.
+
+This local refinement strategy makes it possible to split difficult membrane connections without creating unnecessary fragments elsewhere in the volume.
+
+
+### 4. Interactively Pick, merge, and split labels
 
 1. Activate `Label Selector Mode`
 2. Click labels in the viewer to add them to `Picked Labels`
@@ -110,12 +109,6 @@ Available actions:
 - `Split Selected Label (CC)`: split picked labels by connected components
 - `Split Selected Label (Watershed)`: refine exactly one picked label using watershed inside that label only
 
-Selected-label watershed behavior:
-
-- works on one picked non-background label at a time
-- mask: `score > 0` inside the selected label
-- seeds: `score > selected_label_threshold`
-- the selected-label threshold is absolute
 
 ### 5. Save the result
 
@@ -132,6 +125,23 @@ Save behavior:
 - voxel size is read from the selected score volume when available
 - if no readable voxel size is found, it falls back to `1.0 A`
 - output dtype is automatically chosen from `uint8`, `uint16`, or `uint32`
+
+Optional
+
+### 2. Clean labels in Z
+
+1. Select a labels layer in napari
+2. Set `Start Z` and `Stop Z`
+3. Click `Clean Z Range`
+
+This creates a new labels layer called `cleaned_segmentation`.
+
+### 3. Run connected components
+
+1. Select a labels layer
+2. Optionally keep `Create New Layer` enabled
+3. Click `Run Connected Components`
+
 
 ## Typical use case
 
