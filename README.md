@@ -68,26 +68,28 @@ https://teamtomo.org/membrain-seg/Usage/Segmentation/
 
 ## Basic workflow
 
-1. Perform a global watershed
+### 1. Perform a global watershed
 
 The first step is to generate an initial instance segmentation by applying seeded watershed to the entire score volume.
 
-Click Browse Score Volume...
-Select the score .mrc file.
-Set the Seed Threshold (absolute).
-Click Run Watershed.
+1. Click Browse Score Volume...
+2. Select the score .mrc file.
+3. Set the Seed Threshold (absolute).
+4. Click Run Watershed.
+   
 <img width="422" height="200" alt="image" src="https://github.com/user-attachments/assets/3011ff8e-6b22-435f-960b-56a27f52ba2e" />
 
 We recommend starting with a relatively conservative threshold (around 4.0–4.5, changes depending on your data). This generally separates most neighbouring membranes while avoiding excessive fragmentation of the segmentation into many small labels.
 
-2. Refine individual labels (recommended)
+### 2. Refine individual labels (recommended)
 
 Some membranes may remain connected after the global watershed. Rather than increasing the global seed threshold—which may over-fragment the entire volume—MemSplit allows you to refine only the problematic region.
 
-Enable Label Selector Mode.
-Click the label that requires further splitting.
-Increase the Selected-label watershed seed threshold (More than what you used in the global watershed)
-Click Split Selected Label (Watershed).
+1. Enable Label Selector Mode.
+2. Click the label that requires further splitting.
+3. Increase the Selected-label watershed seed threshold (More than what you used in the global watershed)
+4. Click Split Selected Label (Watershed).
+   
 <img width="414" height="540" alt="image" src="https://github.com/user-attachments/assets/7b0f53b2-ae65-4656-af48-4a949feca135" />
 
 
@@ -100,7 +102,16 @@ This local refinement strategy makes it possible to split difficult membrane con
 
 1. Activate `Label Selector Mode`
 2. Click labels in the viewer to add them to `Picked Labels`
-3. Background `0` is ignored
+3. Background `0` can be used to remove labels that are artefacts or not needed for your downstream processing.
+
+
+
+https://github.com/user-attachments/assets/c5052762-bf1c-4f1e-b191-bdf141215b66
+
+
+
+
+
 
 Available actions:
 
