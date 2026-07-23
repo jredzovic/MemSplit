@@ -102,23 +102,19 @@ This local refinement strategy makes it possible to split difficult membrane con
 
 1. Activate `Label Selector Mode`
 2. Click labels in the viewer to add them to `Picked Labels`
-3. Background `0` can be used to remove labels that are artefacts or not needed for your downstream processing.
-
-
-
-https://github.com/user-attachments/assets/c5052762-bf1c-4f1e-b191-bdf141215b66
-
-
-
-
-
-
 Available actions:
 
 - `Remove Selected`: remove IDs from the picked list
-- `Merge Labels`: merge picked labels into the ID set in `Merge picked labels into`
+- `Merge Labels`: merge picked labels into the ID set in `Merge picked labels into` (0 can be used to remove artefacts or unwanted labels for downstream processing)
 - `Split Selected Label (CC)`: split picked labels by connected components
 - `Split Selected Label (Watershed)`: refine exactly one picked label using watershed inside that label only
+
+
+
+
+https://github.com/user-attachments/assets/92e0a370-0ea7-4cf7-8e33-6a090025089a
+
+
 
 
 ### 5. Save the result
