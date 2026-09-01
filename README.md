@@ -4,8 +4,8 @@ MemSplit is a toolkit for converting semantic membrane segmentations into instan
 
 <img width="1920" height="1028" alt="instance_3d_with_viewer" src="https://github.com/user-attachments/assets/9cb06045-c3a8-49fe-80b9-4d13c9fdca64" />
 
-## Citation 
-Ezhilan, K., & Redzovic, J. (2026). MemSplit [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.21394437
+## Citation
+Ezhilan, K. and Redzovic, J. (2026) “MemSplit”. Zenodo. Available at: https://doi.org/10.5281/zenodo.21394437.
 
 ## Seeded watershed
 
