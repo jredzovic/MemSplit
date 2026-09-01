@@ -192,6 +192,4 @@ Check:
 ## Acknowledgement
 
 This tool is intended for post-processing membrane segmentations such as MemBrain-seg outputs in cryo-ET workflows.
-
-
-DOI to cite will be updated soon. If you are using the plugin and about to publish contact the creators regarding this 
+Citation: Ezhilan, K., & Redzovic, J. (2026). MemSplit [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.21394437
