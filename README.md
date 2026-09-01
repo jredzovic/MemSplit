@@ -4,7 +4,10 @@ MemSplit is a toolkit for converting semantic membrane segmentations into instan
 
 <img width="1920" height="1028" alt="instance_3d_with_viewer" src="https://github.com/user-attachments/assets/9cb06045-c3a8-49fe-80b9-4d13c9fdca64" />
 
-Seeded watershed
+## Citation 
+Ezhilan, K., & Redzovic, J. (2026). MemSplit [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.21394437
+
+## Seeded watershed
 
 MemSplit uses a seeded watershed algorithm to separate touching membrane regions. High-confidence voxels from the MemBrain-seg prediction map (score volume) are first thresholded to generate seed regions. Because  artefactual typically have lower prediction scores, they are often excluded from these seeds. The watershed algorithm then expands each seed through the complete membrane segmentation, producing separate membrane instances while preserving the full segmented membrane geometry.
 
@@ -189,5 +192,4 @@ Check:
 - `label_ops.py` contains merge and split helpers
 - `io_mrc.py` handles `.mrc` loading and saving
 
-## Acknowledgement
-Citation: Ezhilan, K., & Redzovic, J. (2026). MemSplit [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.21394437
+
