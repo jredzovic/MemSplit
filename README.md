@@ -190,6 +190,4 @@ Check:
 - `io_mrc.py` handles `.mrc` loading and saving
 
 ## Acknowledgement
-
-This tool is intended for post-processing membrane segmentations such as MemBrain-seg outputs in cryo-ET workflows.
 Citation: Ezhilan, K., & Redzovic, J. (2026). MemSplit [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.21394437
